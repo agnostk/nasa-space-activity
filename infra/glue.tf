@@ -1,10 +1,10 @@
 resource "aws_glue_catalog_database" "nasa_bronze_catalog" {
-  name        = "nasa_bronze_catalog"
+  name        = "${local.name-prefix}-bronze-catalog"
   description = "Bronze layer for NASA data"
 }
 
 resource "aws_glue_crawler" "nasa_bronze_apod_crawler" {
-  name          = "nasa_bronze_apod_crawler"
+  name          = "${local.name-prefix}-bronze-apod-crawler"
   role          = aws_iam_role.glue_service_role.arn
   database_name = aws_glue_catalog_database.nasa_bronze_catalog.name
   table_prefix  = "nasa_"
@@ -33,7 +33,7 @@ resource "aws_glue_crawler" "nasa_bronze_apod_crawler" {
 }
 
 resource "aws_glue_crawler" "nasa_bronze_neo_crawler" {
-  name          = "nasa_bronze_neo_crawler"
+  name          = "${local.name-prefix}-bronze-neo-crawler"
   role          = aws_iam_role.glue_service_role.arn
   database_name = aws_glue_catalog_database.nasa_bronze_catalog.name
   table_prefix  = "nasa_"
@@ -61,7 +61,7 @@ resource "aws_glue_crawler" "nasa_bronze_neo_crawler" {
 }
 
 resource "aws_glue_crawler" "nasa_bronze_mars_crawler" {
-  name          = "nasa_bronze_mars_crawler"
+  name          = "${local.name-prefix}-bronze-mars-crawler"
   role          = aws_iam_role.glue_service_role.arn
   database_name = aws_glue_catalog_database.nasa_bronze_catalog.name
   table_prefix  = "nasa_"

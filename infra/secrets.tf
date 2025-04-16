@@ -1,5 +1,5 @@
 resource "aws_secretsmanager_secret" "nasa_api_key" {
-  name        = "nasa_API_key"
+  name        = "${local.name-prefix}-nasa-api-key"
   description = "NASA API Key for accessing NASA's APIs"
 }
 
