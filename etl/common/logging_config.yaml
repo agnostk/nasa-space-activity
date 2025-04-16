@@ -40,3 +40,9 @@ loggers:
     level: DEBUG
     handlers: [ console, info_file_handler, error_file_handler ]
     propagate: false
+
+  # NASA NEO extraction job logger
+  neo_extractor:
+    level: DEBUG
+    handlers: [ console, info_file_handler, error_file_handler ]
+    propagate: false
