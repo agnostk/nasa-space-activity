@@ -1,23 +1,27 @@
 import json
 import logging
 import mimetypes
+import os
 from argparse import ArgumentParser
 from datetime import date, datetime, timezone
 from urllib.parse import urlparse
 
 import boto3
 import requests
+from dotenv import load_dotenv
 
 from common.logging_config import load_logging_config
+from common.utils import get_aws_resource
 
 
-def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.client):
+def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.client, bucket_name: str):
     """
     Extracts NASA Astronomy Picture of the Day (APOD) data and saves it to S3.
     :param api_key: The API key for NASA's APOD service
     :param start_date: The start date for the data extraction
     :param end_date: The end date for the data extraction
     :param s3: The S3 client for uploading data
+    :param bucket_name: The S3 bucket name where data will be saved
     :return: None
     """
 
@@ -44,12 +48,12 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
 
     try:
         s3.put_object(
-            Bucket='nasa-bronze',
+            Bucket=bucket_name,
             Key=full_data_key,
             Body=full_data_bytes,
             ContentType='application/json'
         )
-        logger.info(f'Full raw JSON saved to s3://nasa-bronze/{full_data_key}')
+        logger.info(f'Full raw JSON saved to s3://{bucket_name}/{full_data_key}')
     except Exception as e:
         logger.critical('Failed to save full raw JSON to S3', exc_info=e)
         return
@@ -67,12 +71,12 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
 
         try:
             s3.put_object(
-                Bucket='nasa-bronze',
+                Bucket=bucket_name,
                 Key=entry_data_key,
                 Body=entry_data_bytes,
                 ContentType='application/json'
             )
-            logger.info(f'Entry data saved to s3://nasa-bronze/{entry_data_key}')
+            logger.info(f'Entry data saved to s3://{bucket_name}/{entry_data_key}')
         except Exception as e:
             logger.critical(f'Failed to save entry data to S3 for date {date_str}', exc_info=e)
             continue
@@ -99,26 +103,47 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
             logger.critical(f'Failed to retrieve image from {image_url}', exc_info=e)
             continue
 
-        # Save image to S3 partitioned by date
         image_key = f'apod/date={date_str}/image/image.{image_extension}'
         image_bytes = image_request.content
 
+        # Save image to S3 partitioned by date
         try:
             s3.put_object(
-                Bucket='nasa-bronze',
+                Bucket=bucket_name,
                 Key=image_key,
                 Body=image_bytes,
                 ContentType=image_content_type
             )
-            logger.info(f'Image saved to s3://nasa-bronze/{image_key}')
+            logger.info(f'Image saved to s3://{bucket_name}/{image_key}')
         except Exception as e:
             logger.critical(f'Failed to save image to S3 for date {date_str}', exc_info=e)
+            continue
+
+        metadata_key = f'apod/date={date_str}/meta/images.json'
+        metadata = {
+            "filename": image_key,
+            "s3_path": f's3://{bucket_name}/{image_key}',
+            "media_type": media_type,
+            "image_url": image_url,
+        }
+        # Save metadata for the image
+        try:
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=metadata_key,
+                Body=json.dumps(metadata).encode('utf-8'),
+                ContentType='application/json'
+            )
+            logger.info(f'Metadata saved to s3://{bucket_name}/{metadata_key}')
+        except Exception as e:
+            logger.critical(f'Failed to save metadata to S3 for date {date_str}', exc_info=e)
             continue
 
     logger.info('APOD data extraction completed successfully')
 
 
 if __name__ == '__main__':
+
     # Parse command line arguments
     parser = ArgumentParser()
     parser.add_argument('--start_date',
@@ -129,14 +154,6 @@ if __name__ == '__main__':
                         type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
                         default=(datetime.now(timezone.utc)).strftime('%Y-%m-%d'),
                         help='End date (YYYY-MM-DD)')
-    parser.add_argument('--region',
-                        type=str,
-                        default='ap-northeast-1',
-                        help='AWS region')
-    parser.add_argument('--profile',
-                        default='agnostk',
-                        type=str,
-                        help='AWS SSO Profile (only required when running locally)')
     parser.add_argument('--local',
                         action='store_true',
                         default=False,
@@ -147,19 +164,32 @@ if __name__ == '__main__':
     load_logging_config()
     logger = logging.getLogger('apod_extractor')
 
+    # Get environment variables
+    load_dotenv()
+    try:
+        aws_region = os.getenv('AWS_REGION')
+        aws_profile = os.getenv('AWS_PROFILE')
+        bucket_id = os.getenv('AWS_S3_BRONZE_BUCKET_ID')
+        nasa_secret_id = os.getenv('AWS_SECRET_NASA_API_ID')
+        if not aws_region or not aws_profile or not bucket_id:
+            raise ValueError("Missing required environment variables")
+    except ValueError as e:
+        logger.critical('Missing required environment variables', exc_info=e)
+        exit(1)
+
     logger.info('Starting APOD data extraction')
-    logger.info(f'Parameters: start_date={args.start_date}, end_date={args.end_date}, region={args.region}')
+    logger.info(f'Parameters: start_date={args.start_date}, end_date={args.end_date}')
 
     # Initialize AWS session
     if args.local:
         # When running locally, use the AWS SSO profile
-        boto3.setup_default_session(profile_name=args.profile)
-        logger.info(f'Running in local mode with AWS SSO profile: {args.profile}')
+        boto3.setup_default_session(profile_name=aws_profile)
+        logger.info(f'Running in local mode with AWS SSO profile: {aws_profile}')
 
     # Initialize AWS clients
     try:
-        s3_client = boto3.client('s3', region_name=args.region)
-        secrets_manager_client = boto3.client('secretsmanager', region_name=args.region)
+        s3_client = boto3.client('s3', region_name=aws_region)
+        secrets_manager_client = boto3.client('secretsmanager', region_name=aws_region)
         logger.info('AWS clients initialized successfully')
 
     except Exception as e:
@@ -168,11 +198,19 @@ if __name__ == '__main__':
 
     # Retrieve the API key from AWS Secrets Manager
     try:
-        nasa_api_key = secrets_manager_client.get_secret_value(SecretId='nasa_API_key')['SecretString']
+        nasa_api_key = secrets_manager_client.get_secret_value(
+            SecretId=get_aws_resource(nasa_secret_id)
+        )['SecretString']
         logger.info('API key retrieved successfully')
     except Exception as e:
         logger.critical('Failed to retrieve API key', exc_info=e)
         exit(1)
 
     # Extract APOD data
-    extract_apod_data(nasa_api_key, args.start_date, args.end_date, s3_client)
+    extract_apod_data(
+        api_key=nasa_api_key,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        s3=s3_client,
+        bucket_name=get_aws_resource(bucket_id)
+    )
