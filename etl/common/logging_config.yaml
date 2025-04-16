@@ -46,3 +46,9 @@ loggers:
     level: DEBUG
     handlers: [ console, info_file_handler, error_file_handler ]
     propagate: false
+
+  # NASA MARS extraction job logger
+  mars_extractor:
+    level: DEBUG
+    handlers: [ console, info_file_handler, error_file_handler ]
+    propagate: false

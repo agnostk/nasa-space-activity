@@ -86,6 +86,7 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
             logger.warning(f'Unsupported media type {media_type} for date {date_str}')
             continue
 
+        # Guess the content type of the image
         image_path = urlparse(image_url).path
         image_extension = image_path.split('.')[-1]
         image_content_type = mimetypes.types_map.get(f'.{image_extension}', 'application/octet-stream')
