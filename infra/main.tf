@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   region  = "ap-northeast-1"
-  profile = "agnostk"
+  profile = "agnostk" # <- Set your AWS CLI profile name here
 
   default_tags {
     tags = {

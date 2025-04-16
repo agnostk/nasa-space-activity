@@ -62,7 +62,7 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
         date_str = entry.get('date')
         logger.info(f'Processing entry {i}/{len(raw_json)} for date {date_str}')
 
-        entry_data_key = f'apod/date={date_str}/data.json'
+        entry_data_key = f'apod/date={date_str}/data/data.json'
         entry_data_bytes = json.dumps(entry).encode('utf-8')
 
         try:
@@ -99,7 +99,7 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
             continue
 
         # Save image to S3 partitioned by date
-        image_key = f'apod/date={date_str}/image.{image_extension}'
+        image_key = f'apod/date={date_str}/image/image.{image_extension}'
         image_bytes = image_request.content
 
         try:
