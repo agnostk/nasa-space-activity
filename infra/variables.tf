@@ -6,6 +6,10 @@ variable "env" {
   default = "dev"
 }
 
+variable "aws_region" {
+  default = "ap-northeast-1"
+}
+
 data "aws_caller_identity" "current" {}
 
 resource "random_id" "suffix" {

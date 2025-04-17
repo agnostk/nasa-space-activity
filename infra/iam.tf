@@ -39,11 +39,37 @@ resource "aws_iam_policy" "glue_service_policy" {
       {
         Effect = "Allow"
         Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+        ]
+        Resource = "${aws_s3_bucket.nasa_silver_bucket.arn}/*",
+
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+        ]
+        Resource = aws_s3_bucket.nasa_silver_bucket.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
         ]
         Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
+        Resource = aws_iam_role.glue_service_role.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = "s3:GetObject",
+        Resource = "${aws_s3_bucket.nasa_pipeline_code.arn}/*"
       }
     ]
   })

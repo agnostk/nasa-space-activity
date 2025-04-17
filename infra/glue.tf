@@ -88,3 +88,20 @@ resource "aws_glue_crawler" "nasa_bronze_mars_crawler" {
     delete_behavior = "LOG"
   }
 }
+
+resource "aws_glue_job" "transform_apod_job" {
+  name         = "${local.name-prefix}-transform-apod-job"
+  role_arn     = aws_iam_role.glue_service_role.arn
+  glue_version = "5.0"
+
+  command {
+    script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.transform_apod_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--glue_source_database" = aws_glue_catalog_database.nasa_bronze_catalog.name
+    "--glue_source_table"    = "nasa_apod"
+    "--s3_target_path"       = "s3://${aws_s3_bucket.nasa_silver_bucket.bucket}/apod/"
+  }
+}

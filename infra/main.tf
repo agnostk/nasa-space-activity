@@ -13,7 +13,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = "ap-northeast-1"
+  region  = local.region
   profile = "agnostk" # <- Set your AWS CLI profile name here
 
   default_tags {
@@ -25,5 +25,6 @@ provider "aws" {
 
 locals {
   name-prefix = "${var.project}-${var.env}-${data.aws_caller_identity.current.account_id}-${random_id.suffix.hex}"
+  region      = "ap-northeast-1"
 }
 
