@@ -4,8 +4,14 @@ resource "aws_glue_catalog_database" "nasa_bronze_catalog" {
   description = "Bronze layer for NASA data"
 }
 
+resource "aws_glue_catalog_database" "nasa_silver_catalog" {
+  name        = "${local.name-prefix}-silver-catalog"
+  description = "Silver layer for NASA data"
+}
+
 
 # Crawlers
+# Bronze
 resource "aws_glue_crawler" "nasa_bronze_apod_crawler" {
   name          = "${local.name-prefix}-bronze-apod-crawler"
   role          = aws_iam_role.glue_service_role.arn
@@ -92,6 +98,90 @@ resource "aws_glue_crawler" "nasa_bronze_mars_crawler" {
   }
 }
 
+# Silver
+resource "aws_glue_crawler" "nasa_silver_apod_crawler" {
+  name          = "${local.name-prefix}-silver-apod-crawler"
+  role          = aws_iam_role.glue_service_role.arn
+  database_name = aws_glue_catalog_database.nasa_silver_catalog.name
+  table_prefix  = "nasa_"
+
+  s3_target {
+    path = "s3://${aws_s3_bucket.nasa_silver_bucket.id}/apod/"
+  }
+
+  configuration = jsonencode({
+    "Version" = 1.0
+    "CrawlerOutput" = {
+      "Partitions" = {
+        "AddOrUpdateBehavior" = "InheritFromTable"
+      }
+    },
+    Grouping = {
+      "TableGroupingPolicy" = "CombineCompatibleSchemas"
+    }
+  })
+
+  schema_change_policy {
+    update_behavior = "LOG"
+    delete_behavior = "LOG"
+  }
+}
+
+resource "aws_glue_crawler" "nasa_silver_neo_crawler" {
+  name          = "${local.name-prefix}-silver-neo-crawler"
+  role          = aws_iam_role.glue_service_role.arn
+  database_name = aws_glue_catalog_database.nasa_silver_catalog.name
+  table_prefix  = "nasa_"
+
+  s3_target {
+    path = "s3://${aws_s3_bucket.nasa_silver_bucket.id}/neo/"
+  }
+
+  configuration = jsonencode({
+    "Version" = 1.0
+    "CrawlerOutput" = {
+      "Partitions" = {
+        "AddOrUpdateBehavior" = "InheritFromTable"
+      }
+    },
+    Grouping = {
+      "TableGroupingPolicy" = "CombineCompatibleSchemas"
+    }
+  })
+
+  schema_change_policy {
+    update_behavior = "LOG"
+    delete_behavior = "LOG"
+  }
+}
+
+resource "aws_glue_crawler" "nasa_silver_mars_crawler" {
+  name          = "${local.name-prefix}-silver-mars-crawler"
+  role          = aws_iam_role.glue_service_role.arn
+  database_name = aws_glue_catalog_database.nasa_silver_catalog.name
+  table_prefix  = "nasa_"
+
+  s3_target {
+    path = "s3://${aws_s3_bucket.nasa_silver_bucket.id}/mars/"
+  }
+
+  configuration = jsonencode({
+    "Version" = 1.0
+    "CrawlerOutput" = {
+      "Partitions" = {
+        "AddOrUpdateBehavior" = "InheritFromTable"
+      }
+    },
+    Grouping = {
+      "TableGroupingPolicy" = "CombineCompatibleSchemas"
+    }
+  })
+
+  schema_change_policy {
+    update_behavior = "LOG"
+    delete_behavior = "LOG"
+  }
+}
 
 # Jobs
 resource "aws_glue_job" "transform_apod_job" {
