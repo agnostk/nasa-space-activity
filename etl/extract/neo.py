@@ -65,10 +65,13 @@ def extract_neo_data_chunk(api_key: str, start_date: date, end_date: date, s3: b
     for i, (key, entry) in enumerate(raw_json.get('near_earth_objects').items(), 1):
         # Save JSON entry partitioned by date
         date_str = key
-        logger.info(f'Processing entry {i}/{len(raw_json)} for date {date_str}')
+        logger.info(f'Processing entry {i}/{len(raw_json.get('near_earth_objects'))} for date {date_str}')
+
+        # Convert list of NEOs into NDJSON
+        lines = "\n".join(json.dumps(obj) for obj in entry)
+        entry_data_bytes = lines.encode('utf-8')
 
         entry_data_key = f'neo/date={date_str}/data/data.json'
-        entry_data_bytes = json.dumps(entry).encode('utf-8')
 
         try:
             s3.put_object(
