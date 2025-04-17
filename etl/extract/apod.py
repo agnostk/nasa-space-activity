@@ -191,7 +191,6 @@ if __name__ == '__main__':
         s3_client = boto3.client('s3', region_name=aws_region)
         secrets_manager_client = boto3.client('secretsmanager', region_name=aws_region)
         logger.info('AWS clients initialized successfully')
-
     except Exception as e:
         logger.critical('Failed to initialize AWS clients or retrieve API key', exc_info=e)
         exit(1)
