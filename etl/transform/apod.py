@@ -6,7 +6,7 @@ from awsglue.job import Job
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
-from pyspark.sql.functions import col, asc, to_date, trim
+from pyspark.sql.functions import col, to_date, trim
 
 # Parse command line arguments using Glue's method
 args = getResolvedOptions(sys.argv, [
@@ -25,6 +25,9 @@ sc = SparkContext.getOrCreate()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+# Read data from Glue catalog
 dyf = glueContext.create_dynamic_frame.from_catalog(database=GLUE_SOURCE_DATABASE, table_name=GLUE_SOURCE_TABLE)
 source_df = dyf.toDF()
 
