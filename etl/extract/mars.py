@@ -97,7 +97,7 @@ def extract_mars_data(api_key: str, start_date: date, end_date: date, s3: boto3.
                 continue
 
             metadata = {
-                "filename": image_key,
+                "id": image_id,
                 "s3_path": f's3://{bucket_name}/{image_key}',
                 "content_type": image_content_type,
                 "image_url": image_url,
@@ -107,12 +107,16 @@ def extract_mars_data(api_key: str, start_date: date, end_date: date, s3: boto3.
 
         metadata_key = f'mars/date={current_date}/meta/images.json'
 
+        # Convert list of images metadata into NDJSON
+        lines = "\n".join(json.dumps(image) for image in images_metadata)
+        images_metadata_bytes = lines.encode('utf-8')
+
         # Save metadata for the images
         try:
             s3.put_object(
                 Bucket=bucket_name,
                 Key=metadata_key,
-                Body=json.dumps(images_metadata).encode('utf-8'),
+                Body=images_metadata_bytes,
                 ContentType='application/json'
             )
             logger.info(f'Metadata saved to s3://{bucket_name}/{metadata_key}')
