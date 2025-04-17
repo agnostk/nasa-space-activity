@@ -16,3 +16,10 @@ resource "aws_s3_object" "transform_apod_script" {
   source = "${path.module}/../etl/transform/apod.py"
   etag = filemd5("${path.module}/../etl/transform/apod.py")
 }
+
+resource "aws_s3_object" "transform_neo_script" {
+  bucket = aws_s3_bucket.nasa_pipeline_code.bucket
+  key    = "jobs/transform-neo.py"
+  source = "${path.module}/../etl/transform/neo.py"
+  etag = filemd5("${path.module}/../etl/transform/neo.py")
+}
