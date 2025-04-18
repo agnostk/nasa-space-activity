@@ -70,6 +70,11 @@ resource "aws_iam_policy" "glue_service_policy" {
         Effect   = "Allow"
         Action   = "s3:GetObject",
         Resource = "${aws_s3_bucket.nasa_pipeline_code.arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = aws_secretsmanager_secret.nasa_api_key.arn
       }
     ]
   })

@@ -184,10 +184,30 @@ resource "aws_glue_crawler" "nasa_silver_mars_crawler" {
 }
 
 # Jobs
+resource "aws_glue_job" "extract_apod_job" {
+  name              = "${local.name-prefix}-extract-apod-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
+
+  command {
+    script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.extract_apod_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--nasa_secret_key"   = aws_secretsmanager_secret.nasa_api_key.name
+    "--bronze_bucket_key" = aws_s3_bucket.nasa_bronze_bucket.id
+  }
+}
+
 resource "aws_glue_job" "transform_apod_job" {
-  name         = "${local.name-prefix}-transform-apod-job"
-  role_arn     = aws_iam_role.glue_service_role.arn
-  glue_version = "5.0"
+  name              = "${local.name-prefix}-transform-apod-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
 
   command {
     script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.transform_apod_script.key}"
@@ -202,9 +222,11 @@ resource "aws_glue_job" "transform_apod_job" {
 }
 
 resource "aws_glue_job" "transform_neo_job" {
-  name         = "${local.name-prefix}-transform-neo-job"
-  role_arn     = aws_iam_role.glue_service_role.arn
-  glue_version = "5.0"
+  name              = "${local.name-prefix}-transform-neo-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
 
   command {
     script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.transform_neo_script.key}"
@@ -219,9 +241,11 @@ resource "aws_glue_job" "transform_neo_job" {
 }
 
 resource "aws_glue_job" "transform_mars_job" {
-  name         = "${local.name-prefix}-transform-mars-job"
-  role_arn     = aws_iam_role.glue_service_role.arn
-  glue_version = "5.0"
+  name              = "${local.name-prefix}-transform-mars-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
 
   command {
     script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.transform_mars_script.key}"

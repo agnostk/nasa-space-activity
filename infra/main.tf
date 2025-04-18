@@ -13,8 +13,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = local.region
-  profile = "agnostk" # <- Set your AWS CLI profile name here
+  region = local.region
 
   default_tags {
     tags = {
@@ -26,5 +25,6 @@ provider "aws" {
 locals {
   name-prefix = "${var.project}-${var.env}-${data.aws_caller_identity.current.account_id}-${random_id.suffix.hex}"
   region      = "ap-northeast-1"
+  # enrichment_zip_md5 = filemd5("${path.module}/../enrichment-service/build/enrichment_service.zip")
 }
 

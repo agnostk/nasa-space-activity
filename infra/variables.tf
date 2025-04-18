@@ -21,3 +21,21 @@ variable "nasa_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "enrichment_service_api_key" {
+  description = "API key for the enrichment service"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_access_key_id" {
+  description = "Permanent AWS Access Key ID for the enrichment service"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_access_key" {
+  description = "Permanent AWS Secret Access Key for the enrichment service"
+  type        = string
+  sensitive   = true
+}
