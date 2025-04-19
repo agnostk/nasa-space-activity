@@ -66,3 +66,10 @@ resource "aws_s3_object" "enrich_apod_script" {
   source = "${path.module}/../etl/enrich/apod.py"
   etag = filemd5("${path.module}/../etl/enrich/apod.py")
 }
+
+resource "aws_s3_object" "enrich_mars_script" {
+  bucket = aws_s3_bucket.nasa_pipeline_code.bucket
+  key    = "jobs/enrich_mars.py"
+  source = "${path.module}/../etl/enrich/mars.py"
+  etag = filemd5("${path.module}/../etl/enrich/mars.py")
+}

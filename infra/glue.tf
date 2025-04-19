@@ -9,6 +9,10 @@ resource "aws_glue_catalog_database" "nasa_silver_catalog" {
   description = "Silver layer for NASA data"
 }
 
+resource "aws_glue_catalog_database" "nasa_gold_catalog" {
+  name        = "${local.name-prefix}-gold-catalog"
+  description = "Gold layer for NASA data"
+}
 
 # Crawlers
 # Bronze
@@ -183,6 +187,35 @@ resource "aws_glue_crawler" "nasa_silver_mars_crawler" {
   }
 }
 
+# Gold
+resource "aws_glue_crawler" "nasa_gold_apod_crawler" {
+  name          = "${local.name-prefix}-gold-apod-crawler"
+  role          = aws_iam_role.glue_service_role.arn
+  database_name = aws_glue_catalog_database.nasa_gold_catalog.name
+  table_prefix  = "nasa_"
+
+  s3_target {
+    path = "s3://${aws_s3_bucket.nasa_gold_bucket.id}/apod/"
+  }
+
+  configuration = jsonencode({
+    "Version" = 1.0
+    "CrawlerOutput" = {
+      "Partitions" = {
+        "AddOrUpdateBehavior" = "InheritFromTable"
+      }
+    },
+    Grouping = {
+      "TableGroupingPolicy" = "CombineCompatibleSchemas"
+    }
+  })
+
+  schema_change_policy {
+    update_behavior = "LOG"
+    delete_behavior = "LOG"
+  }
+}
+
 # Jobs
 # Extract
 resource "aws_glue_job" "extract_apod_job" {
@@ -314,6 +347,27 @@ resource "aws_glue_job" "enrich_apod_job" {
     "--glue_source_database" = aws_glue_catalog_database.nasa_silver_catalog.name
     "--glue_source_table"    = "nasa_apod"
     "--s3_target_path"       = "s3://${aws_s3_bucket.nasa_gold_bucket.bucket}/apod/"
+    "--enrichment_api_url"   = var.enrichment_service_api_url
+    "--enrichment_api_key"   = var.enrichment_service_api_key
+  }
+}
+
+resource "aws_glue_job" "enrich_mars_job" {
+  name              = "${local.name-prefix}-enrich-mars-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
+
+  command {
+    script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.enrich_mars_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--glue_source_database" = aws_glue_catalog_database.nasa_silver_catalog.name
+    "--glue_source_table"    = "nasa_mars"
+    "--s3_target_path"       = "s3://${aws_s3_bucket.nasa_gold_bucket.bucket}/mars/"
     "--enrichment_api_url"   = var.enrichment_service_api_url
     "--enrichment_api_key"   = var.enrichment_service_api_key
   }
