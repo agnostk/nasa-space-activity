@@ -68,7 +68,7 @@ def fetch_threat_score(record):
                 'miss_distance_km': record['miss_distance_km'],
                 'hazardous': record['hazardous'],
             },
-            timeout=10.0
+            timeout=30.0
         )
         response.raise_for_status()
         threat_score = response.json()['threat_score']
@@ -117,7 +117,6 @@ schema = StructType([
 
     # Enrichment fields
     StructField('threat_score', DoubleType(), True),
-    StructField('enrichment_error', StringType(), True),
 ])
 
 # Infer schema back from enriched RDD (can also use a defined schema)

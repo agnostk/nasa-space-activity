@@ -72,7 +72,7 @@ def fetch_metadata(record):
                 'image_url': image_url,
                 'is_s3': is_s3
             },
-            timeout=10.0
+            timeout=30.0
         )
         response.raise_for_status()
         metadata = response.json()
@@ -120,14 +120,11 @@ schema = StructType([
     StructField('photo_id', IntegerType(), True),
     StructField('sol', IntegerType(), True),
     StructField('camera_id', IntegerType(), True),
-    StructField('camera_name', StringType(), True),
     StructField('camera_full_name', StringType(), True),
     StructField('img_src', StringType(), True),
-    StructField('earth_date', StringType(), True),
     StructField('rover_name', StringType(), True),
+    StructField('rover_status', StringType(), True),
     StructField('s3_path', StringType(), True),
-    StructField('content_type', StringType(), True),
-    StructField('image_url', StringType(), True),
     StructField('date', StringType(), True),
 
     # Enrichment fields
@@ -139,7 +136,6 @@ schema = StructType([
     StructField('classification_confidence', DoubleType(), True),
     StructField('image_width', IntegerType(), True),
     StructField('image_height', IntegerType(), True),
-    StructField('enrichment_error', StringType(), True)
 ])
 
 # Infer schema back from enriched RDD (can also use a defined schema)

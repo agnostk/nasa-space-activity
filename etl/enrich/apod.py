@@ -134,7 +134,6 @@ schema = StructType([
     StructField('classification_confidence', DoubleType(), True),
     StructField('image_width', IntegerType(), True),
     StructField('image_height', IntegerType(), True),
-    StructField('content_type', StringType(), True),
 ])
 
 # Infer schema back from enriched RDD (can also use a defined schema)
