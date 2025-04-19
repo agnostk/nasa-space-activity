@@ -18,10 +18,11 @@ engine = create_engine(DATABASE_URL, echo=True)
 Base = declarative_base()
 
 
-class NasaEnrichedData(Base):
+class NasaApodData(Base):
     __tablename__ = 'apod'
 
     id = Column(Integer, primary_key=True, autoincrement=True)  # ✅ Required primary key
+    date = Column(Date)
 
     title = Column(Text)
     copyright = Column(Text)
@@ -29,8 +30,34 @@ class NasaEnrichedData(Base):
     media_type = Column(Text)
     url = Column(Text)
     s3_path = Column(Text)
+
+    average_color_r = Column(Integer)
+    average_color_g = Column(Integer)
+    average_color_b = Column(Integer)
+    image_hash = Column(Text)
+    classification = Column(Text)
+    classification_confidence = Column(Float)
+    image_width = Column(Integer)
+    image_height = Column(Integer)
+
+
+class NasaMarsData(Base):
+    __tablename__ = 'mars'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
     date = Column(Date)
 
+    photo_id = Column(Integer)
+    sol = Column(Integer)
+    camera_id = Column(Integer)
+    camera_full_name = Column(Text)
+    img_src = Column(Text)
+    earth_date = Column(Date)
+    rover_name = Column(Text)
+    rover_status = Column(Text)
+
+    s3_path = Column(Text)
+    content_type = Column(Text)
     average_color_r = Column(Integer)
     average_color_g = Column(Integer)
     average_color_b = Column(Integer)
