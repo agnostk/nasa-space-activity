@@ -52,12 +52,10 @@ class NasaMarsData(Base):
     camera_id = Column(Integer)
     camera_full_name = Column(Text)
     img_src = Column(Text)
-    earth_date = Column(Date)
     rover_name = Column(Text)
     rover_status = Column(Text)
 
     s3_path = Column(Text)
-    content_type = Column(Text)
     average_color_r = Column(Integer)
     average_color_g = Column(Integer)
     average_color_b = Column(Integer)
