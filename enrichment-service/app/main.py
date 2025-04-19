@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
-from app.routers import neo_threat_score, image_metadata
+
 from app.dependencies.auth import verify_api_key
+from app.routers import neo_threat_score, image_metadata
 
 app = FastAPI(
     title='NASA NEO Threat API',

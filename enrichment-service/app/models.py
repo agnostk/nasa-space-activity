@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -16,7 +16,8 @@ class NeoThreatScoreResponse(BaseModel):
 
 
 class ImageMetadataRequest(BaseModel):
-    image_url: HttpUrl
+    image_url: Union[HttpUrl, str]
+    is_s3: bool = False
 
 
 class RGBColor(BaseModel):
@@ -25,9 +26,14 @@ class RGBColor(BaseModel):
     b: int
 
 
+class Classification(BaseModel):
+    top_class: str
+    confidence: float
+
+
 class ImageMetadataResponse(BaseModel):
     average_color: RGBColor
     image_hash: str
     width: int
     height: int
-    content_type: Optional[str]
+    classification: Optional[Classification] = None

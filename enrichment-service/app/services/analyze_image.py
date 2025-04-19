@@ -1,21 +1,41 @@
-from PIL import Image
-import requests
-import imagehash
 from io import BytesIO
-import mimetypes
+
+import boto3
+import imagehash
+import requests
+from PIL import Image
+
+from app.services.classify_image import classify_image
 
 
-def analyze_image(image_url: str):
-    # Download image
-    response = requests.get(image_url, timeout=10)
-    response.raise_for_status()
+def analyze_image(image_source: str, is_s3: bool = False):
+    """
+    Analyzes an image from a URL or S3 path.
+    If `is_s3` is True, `image_source` is treated as an S3 URI: 's3://bucket/key'.
+    """
+    if is_s3:
+        # Parse the S3 path
+        if not image_source.startswith("s3://"):
+            raise ValueError("S3 path must start with s3://")
+
+        s3_parts = image_source[5:].split("/", 1)
+        if len(s3_parts) != 2:
+            raise ValueError("Invalid S3 URI format, must be s3://bucket/key")
+
+        bucket, key = s3_parts
+        s3 = boto3.client("s3")
+        s3_response = s3.get_object(Bucket=bucket, Key=key)
+        image_data = s3_response["Body"].read()
+    else:
+        response = requests.get(image_source, timeout=10)
+        response.raise_for_status()
+        image_data = response.content
 
     # Load image
-    img = Image.open(BytesIO(response.content)).convert('RGB')
+    img = Image.open(BytesIO(image_data)).convert("RGB")
 
-    # Size and content type
+    # Size
     width, height = img.size
-    content_type = response.headers.get('Content-Type') or mimetypes.guess_type(image_url)[0]
 
     # Average color
     pixels = list(img.getdata())
@@ -27,10 +47,16 @@ def analyze_image(image_url: str):
     # Image hash
     phash = str(imagehash.phash(img))
 
+    try:
+        classification = classify_image(img)
+    except Exception as e:
+        classification = None
+        print(f"Classification failed: {str(e)}")
+
     return {
-        'average_color': {'r': avg_r, 'g': avg_g, 'b': avg_b},
-        'image_hash': phash,
-        'width': width,
-        'height': height,
-        'content_type': content_type
+        "average_color": {"r": avg_r, "g": avg_g, "b": avg_b},
+        "image_hash": phash,
+        "width": width,
+        "height": height,
+        "classification": classification,
     }
