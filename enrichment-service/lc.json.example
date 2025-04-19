@@ -1,0 +1,20 @@
+{
+  "serviceName": "enrichment-service",
+  "containers": {
+    "enrichment-service-container": {
+      "image": ":enrichment-service.container.latest",
+      "ports": {
+        "80": "HTTP"
+      },
+      "environment": {
+        "API_KEY": "YOUR-API-KEY-HERE"
+        "AWS_ACCESS_KEY_ID": "YOUR-AWS-KEY-HERE,
+        "AWS_SECRET_ACCESS_KEY": "YOUR-AWS-KEY-HERE"
+      }
+    }
+  },
+  "publicEndpoint": {
+    "containerName": "enrichment-service-container",
+    "containerPort": 80
+  }
+}
