@@ -45,3 +45,15 @@ variable "aws_secret_access_key" {
   type        = string
   sensitive   = true
 }
+
+variable "db_username" {
+  description = "RDS Database username"
+  type        = string
+  default     = "postgres"
+}
+
+variable "db_password" {
+  description = "RDS Database password"
+  type        = string
+  sensitive   = true
+}
