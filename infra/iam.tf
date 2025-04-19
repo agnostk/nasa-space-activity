@@ -88,6 +88,11 @@ resource "aws_iam_policy" "glue_service_policy" {
         Effect   = "Allow"
         Action   = "secretsmanager:GetSecretValue"
         Resource = aws_secretsmanager_secret.nasa_api_key.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = aws_secretsmanager_secret.postgresql_password_key.arn
       }
     ]
   })

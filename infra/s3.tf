@@ -60,6 +60,7 @@ resource "aws_s3_object" "transform_mars_script" {
   etag = filemd5("${path.module}/../etl/transform/mars.py")
 }
 
+# Enrich jobs
 resource "aws_s3_object" "enrich_apod_script" {
   bucket = aws_s3_bucket.nasa_pipeline_code.bucket
   key    = "jobs/enrich_apod.py"
@@ -79,4 +80,12 @@ resource "aws_s3_object" "enrich_neo_script" {
   key    = "jobs/enrich_neo.py"
   source = "${path.module}/../etl/enrich/neo.py"
   etag = filemd5("${path.module}/../etl/enrich/neo.py")
+}
+
+# Load jobs
+resource "aws_s3_object" "load_apod_script" {
+  bucket = aws_s3_bucket.nasa_pipeline_code.bucket
+  key    = "jobs/load_apod.py"
+  source = "${path.module}/../etl/load/apod.py"
+  etag = filemd5("${path.module}/../etl/load/apod.py")
 }
