@@ -1,7 +1,7 @@
 from os import environ
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, Integer, Float, Date, Text
+from sqlalchemy import create_engine, Column, Integer, Float, Date, Text, String, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 load_dotenv()
@@ -21,7 +21,7 @@ Base = declarative_base()
 class NasaApodData(Base):
     __tablename__ = 'apod'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)  # ✅ Required primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
     date = Column(Date)
 
     title = Column(Text)
@@ -64,6 +64,27 @@ class NasaMarsData(Base):
     classification_confidence = Column(Float)
     image_width = Column(Integer)
     image_height = Column(Integer)
+
+
+class NasaNeoData(Base):
+    __tablename__ = 'neo'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date)
+
+    asteroid_id = Column(String)
+    asteroid_name = Column(String)
+    absolute_magnitude_h = Column(Float)
+    diameter_min_km = Column(Float)
+    diameter_max_km = Column(Float)
+    hazardous = Column(Boolean)
+    close_approach_date = Column(String)
+    velocity_kph = Column(Float)
+    miss_distance_km = Column(Float)
+    orbiting_body = Column(String)
+    is_sentry_object = Column(Boolean)
+    sentry_data = Column(Text)
+    threat_score = Column(Float)
 
 
 # Create table if it doesn't exist
