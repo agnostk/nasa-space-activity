@@ -727,3 +727,34 @@ resource "aws_glue_trigger" "after_enrichment_part2" {
     crawler_name = aws_glue_crawler.nasa_gold_neo_crawler.name
   }
 }
+# Step 7: After Gold Crawlers → Load Jobs
+resource "aws_glue_trigger" "after_gold_crawlers" {
+  name          = "${local.name-prefix}-after_gold_crawlers"
+  type          = "CONDITIONAL"
+  workflow_name = aws_glue_workflow.nasa_etl_pipeline.name
+
+  predicate {
+    conditions {
+      crawler_name = aws_glue_crawler.nasa_gold_apod_crawler.name
+      crawl_state  = "SUCCEEDED"
+    }
+    conditions {
+      crawler_name = aws_glue_crawler.nasa_gold_mars_crawler.name
+      crawl_state  = "SUCCEEDED"
+    }
+    conditions {
+      crawler_name = aws_glue_crawler.nasa_gold_neo_crawler.name
+      crawl_state  = "SUCCEEDED"
+    }
+  }
+
+  actions {
+    job_name = aws_glue_job.load_apod_job.name
+  }
+  actions {
+    job_name = aws_glue_job.load_mars_job.name
+  }
+  actions {
+    job_name = aws_glue_job.load_neo_job.name
+  }
+}
