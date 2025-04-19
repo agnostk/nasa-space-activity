@@ -121,7 +121,7 @@ schema = StructType([
     StructField('copyright', StringType(), True),
     StructField('explanation', StringType(), True),
     StructField('media_type', StringType(), True),
-    StructField('url', StringType(), True),
+    StructField('image_url', StringType(), True),
     StructField('s3_path', StringType(), True),
     StructField('date', StringType(), True),  # partition key
 
