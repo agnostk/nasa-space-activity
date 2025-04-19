@@ -5,6 +5,7 @@ import imagehash
 import requests
 from PIL import Image
 
+from app.config import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 from app.services.classify_image import classify_image
 
 
@@ -23,7 +24,9 @@ def analyze_image(image_source: str, is_s3: bool = False):
             raise ValueError("Invalid S3 URI format, must be s3://bucket/key")
 
         bucket, key = s3_parts
-        s3 = boto3.client("s3")
+        s3 = boto3.client("s3",
+                          aws_access_key_id=AWS_ACCESS_KEY_ID,
+                          aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
         s3_response = s3.get_object(Bucket=bucket, Key=key)
         image_data = s3_response["Body"].read()
     else:
