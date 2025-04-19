@@ -17,6 +17,13 @@ resource "aws_s3_object" "extract_apod_script" {
   etag = filemd5("${path.module}/../etl/extract/apod.py")
 }
 
+resource "aws_s3_object" "extract_mars_script" {
+  bucket = aws_s3_bucket.nasa_pipeline_code.bucket
+  key    = "jobs/extract_mars.py"
+  source = "${path.module}/../etl/extract/mars.py"
+  etag = filemd5("${path.module}/../etl/extract/mars.py")
+}
+
 resource "aws_s3_object" "transform_apod_script" {
   bucket = aws_s3_bucket.nasa_pipeline_code.bucket
   key    = "jobs/transform_apod.py"

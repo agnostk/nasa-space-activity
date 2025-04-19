@@ -1,17 +1,12 @@
 import json
 import logging
 import mimetypes
-import os
 from argparse import ArgumentParser
 from datetime import date, datetime, timezone, timedelta
 from urllib.parse import urlparse
 
 import boto3
 import requests
-from dotenv import load_dotenv
-
-from common.logging_config import load_logging_config
-from common.utils import get_aws_resource
 
 
 def extract_mars_data(api_key: str, start_date: date, end_date: date, s3: boto3.client, bucket_name: str):
@@ -133,57 +128,42 @@ if __name__ == '__main__':
     parser.add_argument('--start_date',
                         type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
                         default=(datetime.now(timezone.utc)).strftime('%Y-%m-%d'),
-                        help='Start date (YYYY-MM-DD)')
+                        help='Start date (YYYY-MM-DD), defaults to today')
     parser.add_argument('--end_date',
                         type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
                         default=(datetime.now(timezone.utc)).strftime('%Y-%m-%d'),
-                        help='End date (YYYY-MM-DD)')
-    parser.add_argument('--local',
-                        action='store_true',
-                        default=False,
-                        help='Run locally while connecting to AWS (requires AWS SSO profile)')
-    args = parser.parse_args()
+                        help='End date (YYYY-MM-DD), defaults to today')
+    parser.add_argument('--nasa_secret_key',
+                        type=str,
+                        help='AWS Secrets Manager key for NASA API key',
+                        required=True)
+    parser.add_argument('--bronze_bucket_key',
+                        type=str,
+                        help='AWS S3 bucket key for bronze data',
+                        required=True)
+    args, _ = parser.parse_known_args()
 
     # Initialize logger
-    load_logging_config()
-    logger = logging.getLogger('mars_extractor')
-
-    # Get environment variables
-    load_dotenv()
-    try:
-        aws_region = os.getenv('AWS_REGION')
-        aws_profile = os.getenv('AWS_PROFILE')
-        bucket_id = os.getenv('AWS_S3_BRONZE_BUCKET_ID')
-        nasa_secret_id = os.getenv('AWS_SECRET_NASA_API_ID')
-        if not aws_region or not aws_profile or not bucket_id:
-            raise ValueError("Missing required environment variables")
-    except ValueError as e:
-        logger.critical('Missing required environment variables', exc_info=e)
-        exit(1)
+    logger = logging.getLogger()
+    logging.basicConfig(level=logging.INFO)
+    logger.setLevel(logging.INFO)
 
     logger.info('Starting MARS data extraction')
     logger.info(f'Parameters: start_date={args.start_date}, end_date={args.end_date}')
 
-    # Initialize AWS session
-    if args.local:
-        # When running locally, use the AWS SSO profile
-        boto3.setup_default_session(profile_name=aws_profile)
-        logger.info(f'Running in local mode with AWS SSO profile: {aws_profile}')
-
     # Initialize AWS clients
     try:
-        s3_client = boto3.client('s3', region_name=aws_region)
-        secrets_manager_client = boto3.client('secretsmanager', region_name=aws_region)
+        s3_client = boto3.client('s3')
+        secrets_manager_client = boto3.client('secretsmanager')
         logger.info('AWS clients initialized successfully')
-
     except Exception as e:
-        logger.critical('Failed to initialize AWS clients or retrieve API key', exc_info=e)
+        logger.critical('Failed to initialize AWS clients', exc_info=e)
         exit(1)
 
     # Retrieve the API key from AWS Secrets Manager
     try:
         nasa_api_key = secrets_manager_client.get_secret_value(
-            SecretId=get_aws_resource(nasa_secret_id)
+            SecretId=args.nasa_secret_key
         )['SecretString']
         logger.info('API key retrieved successfully')
     except Exception as e:
@@ -196,5 +176,5 @@ if __name__ == '__main__':
         start_date=args.start_date,
         end_date=args.end_date,
         s3=s3_client,
-        bucket_name=get_aws_resource(bucket_id)
+        bucket_name=args.bronze_bucket_key
     )

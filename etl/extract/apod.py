@@ -138,7 +138,6 @@ def extract_apod_data(api_key: str, start_date: date, end_date: date, s3: boto3.
 
 
 if __name__ == '__main__':
-
     # Parse command line arguments
     parser = ArgumentParser()
     parser.add_argument('--start_date',
