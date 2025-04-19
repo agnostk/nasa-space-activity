@@ -1,15 +1,10 @@
 import json
 import logging
-import os
 from argparse import ArgumentParser
 from datetime import date, datetime, timezone, timedelta
 
 import boto3
 import requests
-from dotenv import load_dotenv
-
-from common.logging_config import load_logging_config
-from common.utils import get_aws_resource
 
 
 def extract_neo_data_chunk(api_key: str, start_date: date, end_date: date, s3: boto3.client, bucket_name: str):
@@ -65,7 +60,7 @@ def extract_neo_data_chunk(api_key: str, start_date: date, end_date: date, s3: b
     for i, (key, entry) in enumerate(raw_json.get('near_earth_objects').items(), 1):
         # Save JSON entry partitioned by date
         date_str = key
-        logger.info(f'Processing entry {i}/{len(raw_json.get('near_earth_objects'))} for date {date_str}')
+        logger.info(f'Processing entry {i}/{len(raw_json.get("near_earth_objects"))} for date {date_str}')
 
         # Convert list of NEOs into NDJSON
         lines = "\n".join(json.dumps(obj) for obj in entry)
@@ -94,56 +89,42 @@ if __name__ == '__main__':
     parser.add_argument('--start_date',
                         type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
                         default=(datetime.now(timezone.utc)).strftime('%Y-%m-%d'),
-                        help='Start date (YYYY-MM-DD)')
+                        help='Start date (YYYY-MM-DD), defaults to today')
     parser.add_argument('--end_date',
                         type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(),
                         default=(datetime.now(timezone.utc)).strftime('%Y-%m-%d'),
-                        help='End date (YYYY-MM-DD)')
-    parser.add_argument('--local',
-                        action='store_true',
-                        default=False,
-                        help='Run locally while connecting to AWS (requires AWS SSO profile)')
-    args = parser.parse_args()
+                        help='End date (YYYY-MM-DD), defaults to today')
+    parser.add_argument('--nasa_secret_key',
+                        type=str,
+                        help='AWS Secrets Manager key for NASA API key',
+                        required=True)
+    parser.add_argument('--bronze_bucket_key',
+                        type=str,
+                        help='AWS S3 bucket key for bronze data',
+                        required=True)
+    args, _ = parser.parse_known_args()
 
     # Initialize logger
-    load_logging_config()
-    logger = logging.getLogger('neo_extractor')
-
-    # Get environment variables
-    load_dotenv()
-    try:
-        aws_region = os.getenv('AWS_REGION')
-        aws_profile = os.getenv('AWS_PROFILE')
-        bucket_id = os.getenv('AWS_S3_BRONZE_BUCKET_ID')
-        nasa_secret_id = os.getenv('AWS_SECRET_NASA_API_ID')
-        if not aws_region or not aws_profile or not bucket_id:
-            raise ValueError("Missing required environment variables")
-    except ValueError as e:
-        logger.critical('Missing required environment variables', exc_info=e)
-        exit(1)
+    logger = logging.getLogger()
+    logging.basicConfig(level=logging.INFO)
+    logger.setLevel(logging.INFO)
 
     logger.info('Starting NEO data extraction')
     logger.info(f'Parameters: start_date={args.start_date}, end_date={args.end_date}')
 
-    # Initialize AWS session
-    if args.local:
-        # When running locally, use the AWS SSO profile
-        boto3.setup_default_session(profile_name=aws_profile)
-        logger.info(f'Running in local mode with AWS SSO profile: {aws_profile}')
-
     # Initialize AWS clients
     try:
-        s3_client = boto3.client('s3', region_name=aws_region)
-        secrets_manager_client = boto3.client('secretsmanager', region_name=aws_region)
+        s3_client = boto3.client('s3')
+        secrets_manager_client = boto3.client('secretsmanager')
         logger.info('AWS clients initialized successfully')
     except Exception as e:
-        logger.critical('Failed to initialize AWS clients or retrieve API key', exc_info=e)
+        logger.critical('Failed to initialize AWS clients', exc_info=e)
         exit(1)
 
     # Retrieve the API key from AWS Secrets Manager
     try:
         nasa_api_key = secrets_manager_client.get_secret_value(
-            SecretId=get_aws_resource(nasa_secret_id)
+            SecretId=args.nasa_secret_key
         )['SecretString']
         logger.info('API key retrieved successfully')
     except Exception as e:
@@ -156,7 +137,7 @@ if __name__ == '__main__':
     # Calculate the total duration
     input_start_date = args.start_date
     input_end_date = args.end_date
-    total_duration = (input_end_date - input_start_date).days
+    total_duration = (input_end_date - input_start_date).days + 1
     total_chunks = total_duration // 7 + (1 if total_duration % 7 > 0 else 0)
     current_chunk = 1
 
@@ -165,7 +146,7 @@ if __name__ == '__main__':
 
     # Process data in chunks of 7 days or less
 
-    while chunk_start_date < input_end_date:
+    while chunk_start_date <= input_end_date:
         # Calculate the end date for this chunk
         logger.info(f'Processing chunk {current_chunk}/{total_chunks}')
         chunk_end_date = min(chunk_start_date + timedelta(days=6), input_end_date)
@@ -176,7 +157,7 @@ if __name__ == '__main__':
             start_date=chunk_start_date,
             end_date=chunk_end_date,
             s3=s3_client,
-            bucket_name=get_aws_resource(bucket_id)
+            bucket_name=args.bronze_bucket_key
         )
         logger.info(f'Chunk {current_chunk} processed successfully')
 

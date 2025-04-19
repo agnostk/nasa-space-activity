@@ -1,7 +1,9 @@
+# Store job scripts
 resource "aws_s3_bucket" "nasa_pipeline_code" {
   bucket = "${local.name-prefix}-code"
 }
 
+# Data layers
 resource "aws_s3_bucket" "nasa_bronze_bucket" {
   bucket = "${local.name-prefix}-bronze"
 }
@@ -10,6 +12,7 @@ resource "aws_s3_bucket" "nasa_silver_bucket" {
   bucket = "${local.name-prefix}-silver"
 }
 
+# Extract jobs
 resource "aws_s3_object" "extract_apod_script" {
   bucket = aws_s3_bucket.nasa_pipeline_code.bucket
   key    = "jobs/extract_apod.py"
@@ -24,6 +27,14 @@ resource "aws_s3_object" "extract_mars_script" {
   etag = filemd5("${path.module}/../etl/extract/mars.py")
 }
 
+resource "aws_s3_object" "extract_neo_script" {
+  bucket = aws_s3_bucket.nasa_pipeline_code.bucket
+  key    = "jobs/extract_neo.py"
+  source = "${path.module}/../etl/extract/neo.py"
+  etag = filemd5("${path.module}/../etl/extract/neo.py")
+}
+
+# Transform jobs
 resource "aws_s3_object" "transform_apod_script" {
   bucket = aws_s3_bucket.nasa_pipeline_code.bucket
   key    = "jobs/transform_apod.py"
