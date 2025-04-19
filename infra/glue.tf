@@ -493,6 +493,27 @@ resource "aws_glue_job" "load_mars_job" {
   }
 }
 
+resource "aws_glue_job" "load_neo_job" {
+  name              = "${local.name-prefix}-load-neo-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
+
+  command {
+    script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.load_neo_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--glue_source_database" = aws_glue_catalog_database.nasa_gold_catalog.name
+    "--glue_source_table"    = "nasa_neo"
+    "--db_user"              = var.db_username
+    "--db_password_key"      = aws_secretsmanager_secret.postgresql_password_key.name
+    "--rds_endpoint"         = aws_db_instance.postgresql.endpoint
+  }
+}
+
 # Workflow
 resource "aws_glue_workflow" "nasa_etl_pipeline" {
   name        = "${local.name-prefix}-etl-workflow"
