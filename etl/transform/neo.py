@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime, timezone
 
 from awsglue.context import GlueContext
 from awsglue.dynamicframe import DynamicFrame
@@ -8,17 +9,44 @@ from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from pyspark.sql.functions import col, to_date, explode
 
-# Parse command line arguments using Glue's method
-args = getResolvedOptions(sys.argv, [
+
+def get_glue_args(required_fields: [str], optional_args: dict):
+    """
+    Get command line arguments for Glue job.
+    :param required_fields: list of mandatory fields for the job
+    :param optional_args: dict of optional fields with default values
+    :return: dict of arguments
+    """
+
+    given_optional_fields_key = list(set([i[2:] for i in sys.argv]).intersection([i for i in optional_args]))
+
+    args = getResolvedOptions(sys.argv, required_fields + given_optional_fields_key)
+
+    # Overwrite default value if optional args are provided
+    optional_args.update(args)
+
+    return optional_args
+
+
+# Parse command line arguments
+required_args = [
     'JOB_NAME',
     'glue_source_database',
     'glue_source_table',
     's3_target_path'
-])
+]
+
+optional_args = {
+    'start_date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+    'end_date': datetime.now(timezone.utc).strftime('%Y-%m-%d')
+}
+args = get_glue_args(required_args, optional_args)
 
 GLUE_SOURCE_DATABASE = args['glue_source_database']
 GLUE_SOURCE_TABLE = args['glue_source_table']
 S3_TARGET_PATH = args['s3_target_path']
+START_DATE = args['start_date']
+END_DATE = args['end_date']
 
 # Initialize Glue context
 sc = SparkContext.getOrCreate()
