@@ -27,7 +27,6 @@ resource "aws_iam_policy" "glue_service_policy" {
           "s3:PutObject",
         ]
         Resource = "${aws_s3_bucket.nasa_bronze_bucket.arn}/*",
-
       },
       {
         Effect = "Allow"
@@ -43,7 +42,6 @@ resource "aws_iam_policy" "glue_service_policy" {
           "s3:PutObject",
         ]
         Resource = "${aws_s3_bucket.nasa_silver_bucket.arn}/*",
-
       },
       {
         Effect = "Allow"
@@ -51,6 +49,21 @@ resource "aws_iam_policy" "glue_service_policy" {
           "s3:ListBucket",
         ]
         Resource = aws_s3_bucket.nasa_silver_bucket.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+        ]
+        Resource = "${aws_s3_bucket.nasa_gold_bucket.arn}/*",
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+        ]
+        Resource = aws_s3_bucket.nasa_gold_bucket.arn
       },
       {
         Effect = "Allow"

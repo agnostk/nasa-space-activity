@@ -296,3 +296,25 @@ resource "aws_glue_job" "transform_mars_job" {
     "--s3_target_path"       = "s3://${aws_s3_bucket.nasa_silver_bucket.bucket}/mars/"
   }
 }
+
+# Enrich
+resource "aws_glue_job" "enrich_apod_job" {
+  name              = "${local.name-prefix}-enrich-apod-job"
+  role_arn          = aws_iam_role.glue_service_role.arn
+  glue_version      = "5.0"
+  number_of_workers = 2
+  worker_type       = "G.1X"
+
+  command {
+    script_location = "s3://${aws_s3_bucket.nasa_pipeline_code.bucket}/${aws_s3_object.enrich_apod_script.key}"
+    python_version  = "3"
+  }
+
+  default_arguments = {
+    "--glue_source_database" = aws_glue_catalog_database.nasa_silver_catalog.name
+    "--glue_source_table"    = "nasa_apod"
+    "--s3_target_path"       = "s3://${aws_s3_bucket.nasa_gold_bucket.bucket}/apod/"
+    "--enrichment_api_url"   = var.enrichment_service_api_url
+    "--enrichment_api_key"   = var.enrichment_service_api_key
+  }
+}

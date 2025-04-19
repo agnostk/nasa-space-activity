@@ -22,6 +22,12 @@ variable "nasa_api_key" {
   sensitive   = true
 }
 
+variable "enrichment_service_api_url" {
+  description = "API URL for the enrichment service"
+  type        = string
+  default     = "https://enrichment-service.sfdw802c78hbe.ap-northeast-1.cs.amazonlightsail.com"
+}
+
 variable "enrichment_service_api_key" {
   description = "API key for the enrichment service"
   type        = string

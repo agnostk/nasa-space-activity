@@ -12,6 +12,10 @@ resource "aws_s3_bucket" "nasa_silver_bucket" {
   bucket = "${local.name-prefix}-silver"
 }
 
+resource "aws_s3_bucket" "nasa_gold_bucket" {
+  bucket = "${local.name-prefix}-gold"
+}
+
 # Extract jobs
 resource "aws_s3_object" "extract_apod_script" {
   bucket = aws_s3_bucket.nasa_pipeline_code.bucket
@@ -54,4 +58,11 @@ resource "aws_s3_object" "transform_mars_script" {
   key    = "jobs/transform_mars.py"
   source = "${path.module}/../etl/transform/mars.py"
   etag = filemd5("${path.module}/../etl/transform/mars.py")
+}
+
+resource "aws_s3_object" "enrich_apod_script" {
+  bucket = aws_s3_bucket.nasa_pipeline_code.bucket
+  key    = "jobs/enrich_apod.py"
+  source = "${path.module}/../etl/enrich/apod.py"
+  etag = filemd5("${path.module}/../etl/enrich/apod.py")
 }
