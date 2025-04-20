@@ -114,3 +114,7 @@ enrichment-service/build-and-deploy.bat
 ├── docs/                       # Diagrams and reports
 └── README.md
 ```
+
+## 📝 Report
+
+- [Challenge Report](docs/REPORT.md)
