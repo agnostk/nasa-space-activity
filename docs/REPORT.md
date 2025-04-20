@@ -28,8 +28,8 @@ Glue Crawlers were generating invalid or nested schemas for some of the raw JSON
 which returns arrays under `near_earth_objects`.
 
 **Solution:**  
-I changed the extraction logic to write newline-delimited JSON (NDJSON), then used `explode()` and
-`selectExpr()` in PySpark to normalize arrays and nested objects. This made schema inference deterministic and
+I changed the extraction logic to write newline-delimited JSON (NDJSON), then used `explode()` in PySpark to normalize
+arrays and nested objects. This made schema inference deterministic and
 compatible with later transformation steps.
 
 ---

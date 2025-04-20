@@ -9,9 +9,10 @@ This project implements a robust, cloud-native ETL pipeline that extracts data f
 - 🚜 **Mars Rover Photos**
 
 The pipeline is orchestrated on **AWS Glue** and enriched through a microservice hosted on **AWS Lightsail**, which
-performs tasks like image metadata extraction. Infrastructure is provisioned using **Terraform**, and the final datasets
+performs tasks like image metadata extraction, classification (**PyTorch**) and asteroid threat score. Infrastructure is
+provisioned using **Terraform**, and the final datasets
 are stored in an **AWS RDS PostgreSQL** instance.
-
+****
 It follows the **Medallion Architecture**:
 
 - **Bronze**: Raw API data (Extract)
@@ -31,6 +32,16 @@ workflow orchestration with job dependencies and retry logic for failure resilie
 > ⚠️ Most services run on the AWS Free Tier, but a few (e.g., Lightsail) might incur small costs. Don’t forget to tear
 > down the infra with `terraform destroy` when done.
 
+## 📊 QuickSight Dashboard
+
+The final enriched datasets stored in PostgreSQL can be easily visualized using Amazon QuickSight. This dashboard
+showcases metrics like asteroid threat levels, Mars rover activity by date and camera, and APOD image trends — all
+presented in an interactive and visually appealing format.
+
+<p align="center"> <img src="docs/dashboard.png" alt="Dashboard in QuickSight."/> </p>
+
+> Example of the QuickSight Dashboard built on top of the gold-layer data.
+
 ## Bonus
 
 As a bonus I created a simple
@@ -41,7 +52,7 @@ that allows users to generate mosaics from the space images.
   <img src="docs/mosaic.png" alt="Image generated with the Mosaic Generator app."/>
 </p>
 
-> Image generated with the Mosaic Generator app.
+> Example of image generated with the Mosaic Generator app.
 
 ---
 
@@ -105,11 +116,31 @@ enrichment-service/build-and-deploy.bat
 
 ---
 
+### 3. Preparing the Database
+
+1. Once the infrastructure and enrichment service are up and running, you’ll need to initialize the PostgreSQL database
+   with the necessary schemas, views, and materialized views. To do that, simply run the setup script:
+
+To do that, simply run the setup script:
+
+```bash
+python etl/db/create_tables.py
+```
+
+This script will:
+
+- Create structured tables for APOD, NeoWs, and Mars Rover datasets
+- Define helper views for unified queries
+- Register materialized views to optimize performance for dashboarding
+
+> Make sure your .env file in enrichment-service/ is correctly set up with your RDS credentials before running the
+> script.
+
 ## 📊 Features
 
 - Automated Extraction & Loading using AWS Glue workflows and triggers
 - Data Transformation with PySpark (flattening, normalization, deduplication)
-- Image Metadata Extraction via FastAPI microservice (Lightsail)
+- Image Metadata Extraction and Classification via FastAPI microservice + PyTorch (Lightsail)
 - PostgreSQL-Compatible Schemas for APOD, NEO, and Mars Rover datasets
 - Job Monitoring via CloudWatch Logs and optional SNS notifications
 - IaC using Terraform with modular structure for scalability
