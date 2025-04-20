@@ -57,3 +57,9 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "alert_email" {
+  description = "Email to receive notifications about failed Glue jobs"
+  type        = string
+  sensitive   = true
+}
