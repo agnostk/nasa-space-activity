@@ -3,6 +3,7 @@ FROM python:3.9
 WORKDIR /service
 
 COPY ./requirements.txt /service/requirements.txt
+COPY ./static /service/static
 
 RUN pip install --upgrade -r /service/requirements.txt
 
