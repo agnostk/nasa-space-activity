@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
+from app.dependencies.auth import verify_api_key
 from app.models import NeoThreatScoreRequest, NeoThreatScoreResponse
 from app.services.threat_score import get_threat_score
 
 router = APIRouter()
 
 
-@router.post('/neo-threat-score', response_model=NeoThreatScoreResponse)
+@router.post('/neo-threat-score', response_model=NeoThreatScoreResponse, dependencies=[Depends(verify_api_key)])
 def compute_threat_score(request: NeoThreatScoreRequest):
     try:
         threat_score = get_threat_score(

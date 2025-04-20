@@ -10,6 +10,11 @@
         "API_KEY": "YOUR-API-KEY-HERE"
         "AWS_ACCESS_KEY_ID": "YOUR-AWS-KEY-HERE,
         "AWS_SECRET_ACCESS_KEY": "YOUR-AWS-KEY-HERE"
+        "DB_NAME": "nasa",
+        "DB_USER": "postgres",
+        "DB_PASSWORD": "YOUR-DB-PASSWORD-HERE",
+        "DB_HOST": "YOUR-DB-HOST-HERE",
+        "DB_PORT": "5432"
       }
     }
   },

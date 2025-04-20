@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -37,3 +37,17 @@ class ImageMetadataResponse(BaseModel):
     width: int
     height: int
     classification: Optional[Classification] = None
+
+
+class MosaicTile(BaseModel):
+    source: Literal['apod', 'mars']
+    id: str
+    date: str
+    s3_path: Optional[str] = None
+    image_url: Optional[HttpUrl] = None
+    average_color: RGBColor
+    classification: str
+
+
+class MosaicGeneratorResponse(BaseModel):
+    mosaic_tiles: list[MosaicTile]

@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 
+from app.dependencies.auth import verify_api_key
 from app.models import ImageMetadataRequest, ImageMetadataResponse
 from app.services.analyze_image import analyze_image
 
 router = APIRouter()
 
 
-@router.post('/image-metadata', response_model=ImageMetadataResponse)
+@router.post('/image-metadata', response_model=ImageMetadataResponse, dependencies=[Depends(verify_api_key)])
 def extract_image_metadata(payload: ImageMetadataRequest):
     try:
         metadata = analyze_image(
