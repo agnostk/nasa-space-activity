@@ -18,13 +18,30 @@ It follows the **Medallion Architecture**:
 - **Silver**: Cleaned and normalized data (Transform)
 - **Gold**: Enriched, query-ready data (Enrich)
 
-![ETL Architecture](docs/img.png)
+<p align="center">
+  <img src="docs/diagram.png" alt="ETL Architecture diagram."/>
+</p>
+
+> ETL Architecture diagram.
+
 
 The pipeline is modular, extensible, and designed with traceability, reliability, and automation in mind. It includes
 workflow orchestration with job dependencies and retry logic for failure resilience.
 
 > ⚠️ Most services run on the AWS Free Tier, but a few (e.g., Lightsail) might incur small costs. Don’t forget to tear
 > down the infra with `terraform destroy` when done.
+
+## Bonus
+
+As a bonus I created a simple
+[**web application**](https://enrichment-service.sfdw802c78hbe.ap-northeast-1.cs.amazonlightsail.com/static/index.html)
+that allows users to generate mosaics from the space images.
+
+<p align="center">
+  <img src="docs/mosaic.png" alt="Image generated with the Mosaic Generator app."/>
+</p>
+
+> Image generated with the Mosaic Generator app.
 
 ---
 
