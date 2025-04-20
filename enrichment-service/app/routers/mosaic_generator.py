@@ -9,7 +9,7 @@ router = APIRouter()
 @router.post('/mosaic_generator', response_model=MosaicGeneratorResponse)
 def mosaic_generator(
         image: UploadFile = File(...),
-        mosaic_size: int = Form(...),
+        mosaic_size: int = Form(..., ge=1, le=128),
 ):
     try:
         mosaic = generate_mosaic(image, mosaic_size)

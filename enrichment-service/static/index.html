@@ -3,200 +3,57 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Mosaic Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        body {
-          font-family: sans-serif;
-          text-align: center;
-          margin: 2rem;
-        }
-
-        canvas {
-          border: 2px solid #333;
-          margin-top: 1rem;
-          cursor: pointer;
-        }
-
-        #tooltip {
-          position: absolute;
-          padding: 8px;
-          background: rgba(0, 0, 0, 0.85);
-          color: white;
-          border-radius: 4px;
-          font-size: 13px;
-          pointer-events: none;
-          display: none;
-          z-index: 10;
-          max-width: 250px;
-          white-space: nowrap;
-        }
-
-        #loader {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 18px;
-          background: rgba(0, 0, 0, 0.8);
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          display: none;
-          z-index: 999;
+        @layer base {
+            input[type='number']::-webkit-outer-spin-button,
+            input[type='number']::-webkit-inner-spin-button,
+            input[type='number'] {
+                -webkit-appearance: none;
+                margin: 0;
+                -moz-appearance: textfield !important;
+            }
         }
     </style>
 </head>
-<body>
-<h1>Mosaic Generator</h1>
-<input type="file" id="input_image" accept="image/*"/>
-<br><br>
-<label for="mosaic_size">Mosaic Size (e.g. 8 for 8×8):</label>
-<input type="number" id="mosaic_size" value="8" min="4" max="128"/>
-<button id="submit">Generate Mosaic</button>
-<br/>
-<canvas id="mosaic" width="512" height="512"></canvas>
-<div id="tooltip"></div>
-<div id="loader">🪐 Generating mosaic... Please wait</div>
 
-<script>
-    const tooltip = document.getElementById("tooltip");
-    const loader = document.getElementById("loader");
-    const canvas = document.getElementById("mosaic");
-    const ctx = canvas.getContext("2d");
-
-    let tileMetadata = [];
-    let gridSize = 8;
-    let tileSize = 64;
-
-    async function drawMosaic(tileData, gridSizeInput) {
-      gridSize = gridSizeInput;
-      tileSize = Math.floor(canvas.width / gridSize);
-      tileMetadata = tileData;
-
-      for (let i = 0; i < tileData.length; i++) {
-        const tile = tileData[i];
-        const row = Math.floor(i / gridSize);
-        const col = i % gridSize;
-        const x = col * tileSize;
-        const y = row * tileSize;
-
-        try {
-          const img = await loadImage(tile.s3_path);
-          ctx.drawImage(img, x, y, tileSize, tileSize);
-        } catch (err) {
-          const c = tile.average_color;
-          ctx.fillStyle = `rgb(${c.r}, ${c.g}, ${c.b})`;
-          ctx.fillRect(x, y, tileSize, tileSize);
-        }
-      }
-    }
-
-    function s3_to_https(url) {
-      if (url.startsWith("s3://")) {
-        const s3Parts = url.replace("s3://", "").split("/");
-        const bucket = s3Parts.shift();
-        const key = s3Parts.join("/");
-        // Adjust region below if needed
-        return `https://${bucket}.s3.amazonaws.com/${key}`;
-      }
-      return url;
-    }
-
-    function loadImage(url) {
-      return new Promise((resolve, reject) => {
-        // Convert s3://... to https://bucket.s3.amazonaws.com/key
-        if (url.startsWith("s3://")) {
-          url = s3_to_https(url);
-        }
-
-        const img = new Image();
-        img.crossOrigin = "anonymous"; // still good practice
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = url;
-      });
-    }
-
-    async function generateAndDrawMosaic() {
-      const fileInput = document.getElementById("input_image");
-      const file = fileInput.files[0];
-      const sizeInput = parseInt(document.getElementById("mosaic_size").value, 10);
-      if (!file || isNaN(sizeInput)) {
-        alert("Please select an image and enter a valid mosaic size.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("mosaic_size", sizeInput);
-
-      loader.style.display = "block";
-
-      try {
-        const res = await fetch("/mosaic_generator", {
-          method: "POST",
-          body: formData
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || "Unknown error");
-        }
-
-        const data = await res.json();
-        await drawMosaic(data.mosaic_tiles, sizeInput);
-      } catch (e) {
-        alert("Failed to generate mosaic: " + e.message);
-      } finally {
-        loader.style.display = "none";
-      }
-    }
-
-    document.getElementById("submit").addEventListener("click", generateAndDrawMosaic);
-
-    // Tooltip behavior
-    canvas.addEventListener("mousemove", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const col = Math.floor(x / tileSize);
-      const row = Math.floor(y / tileSize);
-      const index = row * gridSize + col;
-
-      if (tileMetadata[index]) {
-        const tile = tileMetadata[index];
-        tooltip.style.left = `${e.pageX + 10}px`;
-        tooltip.style.top = `${e.pageY + 10}px`;
-        tooltip.style.display = "block";
-        tooltip.innerHTML = `
-          <strong>Source:</strong> ${tile.source}<br>
-          <strong>Date:</strong> ${tile.date}<br>
-          <strong>Classification:</strong> ${tile.classification}<br>
-          <strong>R,G,B:</strong> ${tile.average_color.r}, ${tile.average_color.g}, ${tile.average_color.b}
-        `;
-      } else {
-        tooltip.style.display = "none";
-      }
-    });
-
-    canvas.addEventListener("mouseleave", () => {
-      tooltip.style.display = "none";
-    });
-
-    // Open image on click
-    canvas.addEventListener("click", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const col = Math.floor(x / tileSize);
-      const row = Math.floor(y / tileSize);
-      const index = row * gridSize + col;
-
-      if (tileMetadata[index]?.s3_path) {
-        window.open(s3_to_https(tileMetadata[index].s3_path), "_blank");
-      }
-    });
-</script>
+<body class="bg-slate-900 text-white">
+<main class="py-8 flex flex-col gap-y-4 max-w-[512px] mx-auto justify-center text-center">
+    <h1 class="text-2xl font-semibold uppercase tracking-wide">Mosaic Generator</h1>
+    <div class="py-4 border-dotted border-1 border-white bg-slate-800 flex justify-center items-center">
+        <div class="absolute">
+            <div class="flex flex-col items-center">
+                <i class="fa fa-folder-open fa-4x text-blue-700"></i>
+                <span class="block text-gray-400 font-normal">Upload Image</span>
+            </div>
+        </div>
+        <input type="file" id="input_image" class="h-full w-full opacity-0">
+    </div>
+    <div class="py-4 gap-2 flex justify-center items-center border-1 border-white">
+        <label for="mosaic_size">Mosaic Size</label>
+        <input type="range" id="mosaic_size" value="8" min="1" max="128"
+               oninput="this.nextElementSibling.value=this.value"/>
+        <input class="bg-slate-800 text-center appearance-none" type="number" min="1" max="128" value="8"
+               oninput="this.previousElementSibling.value=this.value"/>
+    </div>
+    <button class="hover:bg-slate-500 cursor-pointer py-4 bg-slate-400 text-black uppercase font-bold tracking-wide"
+            id="submit">Generate Mosaic
+    </button>
+    <canvas id="mosaic" width="512" height="512" class="border-1 border-white"></canvas>
+    <div id="tooltip"
+         class="absolute flex flex-col justify-center items-center p-3 bg-slate-900 text-white rounded-lg pointer-events-none hidden z-50 max-w-xs shadow-lg space-y-2">
+        <div id="tooltip_details" class="text-sm leading-snug break-words"></div>
+        <img id="tooltip_image"
+             class="w-20 h-20 m-auto object-cover rounded-md border border-slate-700"
+             src=""
+             alt="Tooltip preview"/>
+    </div>
+    <div id="loader"
+         class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[18px] bg-black/80 text-white px-6 py-3 rounded-lg hidden z-[999]">
+        ⏳ Generating mosaic... Please wait
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
+
+</main>
