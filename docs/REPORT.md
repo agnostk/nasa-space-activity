@@ -68,4 +68,4 @@ frontend environments.
 
 Despite the challenges, I successfully built and deployed a robust, modular ETL pipeline that automates data collection,
 cleansing, enrichment, and loading from multiple NASA sources. All issues were addressed with production-oriented
-solutions, and most were adapted into reusable Terraform modules and scalable job definitions.
+solutions, and most were adapted into reusable Terraform components and scalable job definitions.
