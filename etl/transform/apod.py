@@ -66,9 +66,9 @@ source_df = dyf.toDF()
 
 # Join image paths from S3
 df_data = (source_df.filter(col('partition_1') == 'data')
-           .select('date', 'title', 'copyright', 'explanation', 'media_type', 'url'))
+           .select('date', 'title', 'copyright', 'explanation', 'media_type'))
 df_meta = (source_df.filter(col('partition_1') == 'meta')
-           .select('date', 's3_path'))
+           .select('date', 's3_path', 'image_url'))
 
 join_df = df_data.join(df_meta, on='date', how='left')
 
