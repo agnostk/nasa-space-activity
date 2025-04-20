@@ -8,6 +8,36 @@ resource "aws_s3_bucket" "nasa_bronze_bucket" {
   bucket = "${local.name-prefix}-bronze"
 }
 
+resource "aws_s3_bucket_policy" "allow_public_image_access" {
+  bucket = aws_s3_bucket.nasa_bronze_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadOnlyForImageFolder"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.nasa_bronze_bucket.arn}/*/image/*"
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket_cors_configuration" "bronze_cors" {
+  bucket = aws_s3_bucket.nasa_bronze_bucket.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+    expose_headers = []
+    max_age_seconds = 3000
+  }
+}
+
+
 resource "aws_s3_bucket" "nasa_silver_bucket" {
   bucket = "${local.name-prefix}-silver"
 }

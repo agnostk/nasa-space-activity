@@ -80,7 +80,7 @@
         const y = row * tileSize;
 
         try {
-          const img = await loadImage(tile.image_url);
+          const img = await loadImage(tile.s3_path);
           ctx.drawImage(img, x, y, tileSize, tileSize);
         } catch (err) {
           const c = tile.average_color;
@@ -90,10 +90,26 @@
       }
     }
 
+    function s3_to_https(url) {
+      if (url.startsWith("s3://")) {
+        const s3Parts = url.replace("s3://", "").split("/");
+        const bucket = s3Parts.shift();
+        const key = s3Parts.join("/");
+        // Adjust region below if needed
+        return `https://${bucket}.s3.amazonaws.com/${key}`;
+      }
+      return url;
+    }
+
     function loadImage(url) {
       return new Promise((resolve, reject) => {
+        // Convert s3://... to https://bucket.s3.amazonaws.com/key
+        if (url.startsWith("s3://")) {
+          url = s3_to_https(url);
+        }
+
         const img = new Image();
-        img.crossOrigin = "anonymous";
+        img.crossOrigin = "anonymous"; // still good practice
         img.onload = () => resolve(img);
         img.onerror = reject;
         img.src = url;
@@ -177,8 +193,8 @@
       const row = Math.floor(y / tileSize);
       const index = row * gridSize + col;
 
-      if (tileMetadata[index]?.image_url) {
-        window.open(tileMetadata[index].image_url, "_blank");
+      if (tileMetadata[index]?.s3_path) {
+        window.open(s3_to_https(tileMetadata[index].s3_path), "_blank");
       }
     });
 </script>
